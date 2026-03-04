@@ -183,16 +183,24 @@
     const savedClass = localStorage.getItem('yarcoik_class');
     if (savedClass) document.getElementById('classSearch').value = savedClass;
 
-    async function loadData() {
+async function loadData() {
         try {
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(links[currentTab])}`;
+            // Используем новый, более быстрый и стабильный прокси
+            const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(links[currentTab])}`;
+            
             const response = await fetch(proxyUrl);
-            const data = await response.json();
+            if (!response.ok) throw new Error("Прокси не отвечает");
+            
+            // Этот прокси возвращает сразу текст, json() больше не нужен!
+            const htmlText = await response.text(); 
+            
             const parser = new DOMParser();
-            const doc = parser.parseFromString(data.contents, 'text/html');
+            const doc = parser.parseFromString(htmlText, 'text/html');
+            
             renderSmartSchedule(doc.body);
         } catch (e) {
-            document.getElementById('content').innerHTML = "<div style='color:var(--danger); padding:20px;'>Ошибка сети. Проверь интернет.</div>";
+            console.error("Ошибка загрузки:", e);
+            document.getElementById('content').innerHTML = "<div style='color:var(--danger); padding:20px; font-weight:bold;'>Ошибка сети. Прокси перегружен или нет интернета.</div>";
         }
     }
 
