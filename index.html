@@ -1,108 +1,420 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Расписание</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YarCoik Schedule | V10</title>
+    <style>
+        /* Базовые переменные (Светлая тема по умолчанию, чтобы Авто-режим работал) */
+        :root {
+            color-scheme: light dark;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #0f172a;
+            --accent: #2563eb;
+            --border: #e2e8f0;
+            --highlight: #3b82f6;
+            --danger: #ef4444;
+            --input-bg: #f1f5f9;
+        }
 
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f4f6f9;
-    margin: 0;
-    padding: 20px;
-}
+        /* Тёмная тема (Системная) */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0a0f1a;
+                --card: #161e2e;
+                --text: #e2e8f0;
+                --accent: #3b82f6;
+                --border: #2d3748;
+                --highlight: #2563eb;
+                --input-bg: #1e293b;
+            }
+        }
 
-.container {
-    max-width: 900px;
-    margin: auto;
-}
+        /* Принудительная Светлая тема */
+        body.light-mode {
+            --bg: #f8fafc; --card: #ffffff; --text: #0f172a;
+            --accent: #2563eb; --border: #e2e8f0; --highlight: #3b82f6; --input-bg: #f1f5f9;
+        }
 
-.tabs {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
+        /* Принудительная Тёмная тема */
+        body.dark-mode {
+            --bg: #0a0f1a; --card: #161e2e; --text: #e2e8f0;
+            --accent: #3b82f6; --border: #2d3748; --highlight: #2563eb; --input-bg: #1e293b;
+        }
 
-.tab {
-    padding: 10px 20px;
-    cursor: pointer;
-    border-radius: 8px;
-    border: none;
-    background: #e0e0e0;
-    font-weight: bold;
-}
+        body {
+            margin: 0; font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg); color: var(--text); overflow-y: scroll;
+            transition: background 0.3s, color 0.3s;
+        }
 
-.tab.active {
-    background: #1e88e5;
-    color: white;
-}
+        .container { max-width: 1200px; margin: auto; padding: 10px; }
 
-.content {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    white-space: pre-wrap;
-    line-height: 1.5;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    min-height: 400px;
-}
-</style>
+        .header {
+            position: sticky; top: 0; z-index: 1000;
+            background: color-mix(in srgb, var(--bg) 90%, transparent);
+            backdrop-filter: blur(12px);
+            padding: 15px 0; border-bottom: 1px solid var(--border);
+            display: flex; flex-direction: column; gap: 15px;
+        }
+
+        .nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .tabs { display: flex; background: var(--input-bg); padding: 4px; border-radius: 12px; border: 1px solid var(--border); }
+        
+        .tab {
+            padding: 10px 18px; border: none; background: transparent;
+            color: var(--text); font-weight: bold; cursor: pointer; opacity: 0.7;
+            border-radius: 10px; transition: 0.3s; font-size: 13px; text-transform: uppercase;
+        }
+        .tab.active { background: var(--accent); color: white; opacity: 1; box-shadow: 0 4px 10px color-mix(in srgb, var(--accent) 40%, transparent); }
+
+        .search-container { flex-grow: 1; display: flex; gap: 10px; min-width: 250px; }
+        
+        .search-box { flex-grow: 1; }
+        .search-box input {
+            width: 100%; background: var(--input-bg); border: 1px solid var(--border);
+            padding: 12px 15px; border-radius: 10px; color: var(--text); outline: none; box-sizing: border-box;
+            font-size: 14px; transition: 0.3s;
+        }
+        .search-box input:focus { border-color: var(--accent); }
+
+        .theme-btn {
+            background: var(--input-bg); border: 1px solid var(--border); color: var(--text);
+            padding: 0 15px; border-radius: 10px; cursor: pointer; font-size: 18px; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .theme-btn:hover { border-color: var(--accent); }
+
+        .doc-title {
+            color: var(--accent); font-size: 18px; font-weight: bold;
+            margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 2px solid var(--border);
+        }
+
+        .announcement {
+            background: color-mix(in srgb, var(--danger) 10%, transparent); 
+            border-left: 4px solid var(--danger);
+            padding: 12px 15px; margin: 15px 0; border-radius: 0 8px 8px 0;
+            font-weight: 600; color: var(--danger); font-size: 15px;
+        }
+
+        .day-card {
+            background: var(--card); border-radius: 12px; margin-bottom: 20px;
+            border: 1px solid var(--border); overflow: hidden;
+            box-shadow: 0 4px 15px color-mix(in srgb, #000 5%, transparent);
+        }
+
+        .table-container { overflow-x: auto; }
+
+        table { width: 100% !important; border-collapse: collapse !important; margin: 0 !important; }
+
+        td, th {
+            border: 1px solid var(--border) !important;
+            padding: 10px !important; font-size: 13px !important;
+            text-align: center !important; vertical-align: middle !important;
+            color: var(--text) !important; background: transparent !important;
+        }
+
+        #content span, #content p { 
+            margin: 0 !important; padding: 0 !important; background: transparent !important; 
+            line-height: 1.4 !important; font-family: inherit !important; display: block;
+        }
+
+        .found-cell { background: var(--highlight) !important; font-weight: bold; color: #fff !important; }
+
+        @media (max-width: 600px) {
+            .nav { flex-direction: column; align-items: stretch; }
+        }
+    </style>
 </head>
-
 <body>
+
 <div class="container">
-
-<div class="tabs">
-    <button class="tab active" onclick="showMain()">ОСНОВНОЕ</button>
-    <button class="tab" onclick="showChanges()">ИЗМЕНЕНИЯ</button>
-</div>
-
-<div id="content" class="content">
-Загрузка...
-</div>
-
+    <div class="header">
+        <div class="nav">
+            <div class="tabs">
+                <button class="tab" onclick="switchTab('main')">Основное</button>
+                <button class="tab active" onclick="switchTab('changes')">Изменения</button>
+            </div>
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="classSearch" placeholder="Твой класс (напр. 9в)..." oninput="applySmartFilter()">
+                </div>
+                <button id="themeToggle" class="theme-btn" onclick="toggleTheme()" title="Сменить тему"></button>
+            </div>
+        </div>
+    </div>
+    <div id="content">Подключение к серверам школы...</div>
 </div>
 
 <script>
-const mainURL = "https://docs.google.com/document/d/1wJBD7NMTuwH4XcIiV5UuZmQ-7lyJB66W/export?format=txt";
-const changesURL = "https://docs.google.com/document/d/15_GMTlGH7J3LfqoA8PTMOyjrFHb8pAL-/export?format=txt";
+    const links = {
+        main: "https://docs.google.com/document/d/1wJBD7NMTuwH4XcIiV5UuZmQ-7lyJB66W/export?format=html",
+        changes: "https://docs.google.com/document/d/15_GMTlGH7J3LfqoA8PTMOyjrFHb8pAL-/export?format=html"
+    };
 
-let currentTab = "main";
+    let currentTab = 'changes';
 
-async function loadData(url) {
-    const response = await fetch(url);
-    return await response.text();
-}
+    // УПРАВЛЕНИЕ ТЕМАМИ
+    let currentTheme = localStorage.getItem('yarcoik_theme') || 'auto';
+    function applyTheme(theme) {
+        const btn = document.getElementById('themeToggle');
+        document.body.classList.remove('light-mode', 'dark-mode');
+        if (theme === 'light') {
+            document.body.classList.add('light-mode');
+            btn.innerText = '☀️';
+        } else if (theme === 'dark') {
+            document.body.classList.add('dark-mode');
+            btn.innerText = '🌙';
+        } else {
+            btn.innerText = '🌓'; // Авто
+        }
+        localStorage.setItem('yarcoik_theme', theme);
+    }
+    function toggleTheme() {
+        if (currentTheme === 'auto') currentTheme = 'dark';
+        else if (currentTheme === 'dark') currentTheme = 'light';
+        else currentTheme = 'auto';
+        applyTheme(currentTheme);
+    }
+    applyTheme(currentTheme);
 
-function setActiveTab(index) {
-    document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
-    document.querySelectorAll(".tab")[index].classList.add("active");
-}
+    // Восстанавливаем класс
+    const savedClass = localStorage.getItem('yarcoik_class');
+    if (savedClass) document.getElementById('classSearch').value = savedClass;
 
-function showMain() {
-    currentTab = "main";
-    setActiveTab(0);
-    loadData(mainURL).then(text => {
-        document.getElementById("content").innerText = text;
-    });
-}
+    async function loadData() {
+        try {
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(links[currentTab])}`;
+            const response = await fetch(proxyUrl);
+            const data = await response.json();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(data.contents, 'text/html');
+            renderSmartSchedule(doc.body);
+        } catch (e) {
+            document.getElementById('content').innerHTML = "<div style='color:var(--danger); padding:20px;'>Ошибка сети. Проверь интернет.</div>";
+        }
+    }
 
-function showChanges() {
-    currentTab = "changes";
-    setActiveTab(1);
-    loadData(changesURL).then(text => {
-        document.getElementById("content").innerText = text;
-    });
-}
+    // Идеальный разрезатель ячеек (Убивает rowspan и colspan)
+    function normalizeTable(table) {
+        const rows = Array.from(table.querySelectorAll('tr'));
+        const matrix =[];
+        
+        rows.forEach((row, rIdx) => {
+            if (!matrix[rIdx]) matrix[rIdx] =[];
+            let cIdx = 0;
+            
+            Array.from(row.children).forEach(cell => {
+                while (matrix[rIdx][cIdx]) cIdx++; 
+                
+                const rSpan = parseInt(cell.getAttribute('rowspan') || 1);
+                const cSpan = parseInt(cell.getAttribute('colspan') || 1);
+                
+                cell.removeAttribute('rowspan');
+                cell.removeAttribute('colspan');
+                cell.setAttribute('data-col', cIdx);
+                
+                matrix[rIdx][cIdx] = cell;
+                
+                // Клонируем вправо
+                for (let c = 1; c < cSpan; c++) {
+                    const clone = cell.cloneNode(true);
+                    clone.setAttribute('data-col', cIdx + c);
+                    matrix[rIdx][cIdx + c] = clone;
+                }
+                
+                // Клонируем вниз
+                for (let r = 1; r < rSpan; r++) {
+                    if (!matrix[rIdx + r]) matrix[rIdx + r] =[];
+                    const cloneDown = cell.cloneNode(true);
+                    cloneDown.setAttribute('data-col', cIdx);
+                    matrix[rIdx + r][cIdx] = cloneDown;
+                    for (let c = 1; c < cSpan; c++) {
+                        const cloneCorner = cell.cloneNode(true);
+                        cloneCorner.setAttribute('data-col', cIdx + c);
+                        matrix[rIdx + r][cIdx + c] = cloneCorner;
+                    }
+                }
+                cIdx += cSpan;
+            });
+        });
+        
+        table.innerHTML = '';
+        matrix.forEach(rowArr => {
+            const tr = document.createElement('tr');
+            rowArr.forEach(item => { if (item instanceof HTMLElement) tr.appendChild(item); });
+            table.appendChild(tr);
+        });
+    }
 
-setInterval(() => {
-    if (currentTab === "main") showMain();
-    else showChanges();
-}, 60000);
+    function renderSmartSchedule(body) {
+        const container = document.getElementById('content');
+        container.innerHTML = '';
+        
+        Array.from(body.children).forEach(el => {
+            const tag = el.tagName.toLowerCase();
+            const text = el.innerText.trim();
+            if (!text) return;
 
-showMain();
+            // Обработка текста вне таблиц
+            if (['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag)) {
+                if (text.length > 500 && text.indexOf(' ') === -1) return; // Мусор Гугла
+                
+                const div = document.createElement('div');
+                const lowerText = text.toLowerCase();
+                
+                if (lowerText.includes('!') || lowerText.includes('уроки по') || lowerText.includes('остальных')) {
+                    div.className = 'announcement';
+                } else if (lowerText.includes('расписание') || /январ|феврал|март|апрел|ма|июн|июл|август|сентябр|октябр|ноябр|декабр/.test(lowerText)) {
+                    div.className = 'doc-title';
+                } else {
+                    div.className = 'announcement'; 
+                }
+                div.innerHTML = el.innerHTML;
+                container.appendChild(div);
+            }
+            
+            // Обработка таблиц
+            if (tag === 'table' || el.querySelector('table')) {
+                const table = tag === 'table' ? el : el.querySelector('table');
+                if (table.querySelectorAll('td').length < 6) return; // Игнор мелких таблиц
+
+                const card = document.createElement('div');
+                card.className = 'day-card';
+                
+                // Ищем "Уроки по 35 минут" ВНУТРИ таблицы до её разрезания
+                const rows = Array.from(table.querySelectorAll('tr'));
+                rows.forEach(row => {
+                    const cells = Array.from(row.children);
+                    if (cells.length === 1 && parseInt(cells[0].getAttribute('colspan') || 1) > 2) {
+                        const rowText = row.innerText.trim();
+                        if (rowText.length > 5 && !/\d[а-яa-z]/i.test(rowText)) {
+                            const div = document.createElement('div');
+                            div.className = 'announcement';
+                            div.innerHTML = cells[0].innerHTML;
+                            card.appendChild(div);
+                            row.remove();
+                        }
+                    }
+                });
+
+                normalizeTable(table); // Разглаживаем
+                
+                const tContainer = document.createElement('div');
+                tContainer.className = 'table-container';
+                tContainer.appendChild(table);
+                card.appendChild(tContainer);
+                container.appendChild(card);
+            }
+        });
+
+        applySmartFilter();
+    }
+
+    function applySmartFilter() {
+        const inputVal = document.getElementById('classSearch').value;
+        const query = inputVal.toLowerCase().replace(/\s+/g, '');
+        localStorage.setItem('yarcoik_class', inputVal);
+
+        // Регулярка для ТОЧНОГО поиска (чтобы 9в не находил 8в или 9а)
+        const exactMatchRegex = new RegExp(`(^|[^а-яёa-z0-9])${query}([^а-яёa-z0-9]|$)`, 'i');
+        const cards = document.querySelectorAll('.day-card');
+
+        cards.forEach(card => {
+            const table = card.querySelector('table');
+            if (!table) return;
+
+            const rows = Array.from(table.querySelectorAll('tr'));
+            let targetCols = new Set();
+            let targetRows = new Set();
+            let isColMode = false;
+
+            // Шаг 1: Ищем точные координаты класса
+            rows.forEach((row, rIdx) => {
+                Array.from(row.children).forEach(cell => {
+                    const rawText = cell.innerText.toLowerCase();
+                    if (query && exactMatchRegex.test(rawText)) {
+                        const colIdx = parseInt(cell.getAttribute('data-col'));
+                        // Если класс найден в шапке (первые 3 строки) -> Режим Колонок
+                        if (rIdx < 3 && rawText.trim().length < 20) {
+                            isColMode = true;
+                            targetCols.add(colIdx);
+                        } else {
+                            targetRows.add(rIdx);
+                        }
+                    }
+                });
+            });
+
+            let visibleDataRows = 0;
+
+            // Шаг 2: Применяем невидимость (style.display = 'none')
+            rows.forEach((row, rIdx) => {
+                const cells = Array.from(row.children);
+                let showRow = false;
+
+                if (!query) {
+                    showRow = true;
+                    cells.forEach(c => { c.style.display = ''; c.classList.remove('found-cell'); });
+                    visibleDataRows++;
+                } else if (isColMode) {
+                    let rowHasContent = false;
+                    cells.forEach(cell => {
+                        const colIdx = parseInt(cell.getAttribute('data-col'));
+                        // Показываем дни, номера уроков и колонку твоего класса
+                        if (colIdx === 0 || colIdx === 1 || targetCols.has(colIdx)) {
+                            cell.style.display = '';
+                            if (targetCols.has(colIdx)) {
+                                cell.classList.add('found-cell');
+                                if (cell.innerText.replace(/[^а-яa-z0-9]/ig, '').length > 0) rowHasContent = true;
+                            } else {
+                                cell.classList.remove('found-cell');
+                            }
+                        } else {
+                            cell.style.display = 'none'; // Жёстко прячем чужие колонки (8в, 9а и тд)
+                        }
+                    });
+                    
+                    if (rIdx < 2 || rowHasContent) {
+                        showRow = true;
+                        if (rIdx >= 2) visibleDataRows++;
+                    }
+                } else {
+                    // Режим Строк (когда класс где-то сбоку или по центру)
+                    cells.forEach(c => { c.style.display = ''; c.classList.remove('found-cell'); });
+                    if (targetRows.has(rIdx)) {
+                        showRow = true;
+                        visibleDataRows++;
+                        cells.forEach(cell => {
+                            if (exactMatchRegex.test(cell.innerText.toLowerCase())) cell.classList.add('found-cell');
+                        });
+                    }
+                }
+
+                row.style.display = showRow ? '' : 'none';
+            });
+
+            // Шаг 3: Если для класса НЕТ расписания в этот день - скрываем всю карточку
+            if (query && visibleDataRows === 0 && !isColMode && targetRows.size === 0) {
+                card.style.display = 'none';
+            } else {
+                card.style.display = '';
+            }
+        });
+    }
+
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.tab').forEach(t => {
+            t.classList.toggle('active', t.innerText.toLowerCase().includes(tab === 'main' ? 'осн' : 'изм'));
+        });
+        document.getElementById('content').innerHTML = "<div style='padding:20px;'>Синхронизация...</div>";
+        loadData();
+    }
+
+    loadData();
+    setInterval(loadData, 120000); // Обновление раз в 2 минуты
 </script>
-
 </body>
 </html>
