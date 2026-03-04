@@ -1,44 +1,107 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Расписание</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f9;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 8px;
+    border: none;
+    background: #e0e0e0;
+    font-weight: bold;
+}
+
+.tab.active {
+    background: #1e88e5;
+    color: white;
+}
+
+.content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    white-space: pre-wrap;
+    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    min-height: 400px;
+}
+</style>
 </head>
+
 <body>
+<div class="container">
 
-<button onclick="showMain()">ОСНОВНОЕ</button>
-<button onclick="showChanges()">ИЗМЕНЕНИЯ</button>
+<div class="tabs">
+    <button class="tab active" onclick="showMain()">ОСНОВНОЕ</button>
+    <button class="tab" onclick="showChanges()">ИЗМЕНЕНИЯ</button>
+</div>
 
-<pre id="content">Загрузка...</pre>
+<div id="content" class="content">
+Загрузка...
+</div>
+
+</div>
 
 <script>
-const docURL = "https://docs.google.com/document/d/15_GMTlGH7J3LfqoA8PTMOyjrFHb8pAL-/export?format=txt";
+const mainURL = "https://docs.google.com/document/d/1wJBD7NMTuwH4XcIiV5UuZmQ-7lyJB66W/export?format=txt";
+const changesURL = "https://docs.google.com/document/d/15_GMTlGH7J3LfqoA8PTMOyjrFHb8pAL-/export?format=txt";
 
-async function loadDoc() {
-    const response = await fetch(docURL);
-    const text = await response.text();
-    return text;
+let currentTab = "main";
+
+async function loadData(url) {
+    const response = await fetch(url);
+    return await response.text();
+}
+
+function setActiveTab(index) {
+    document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+    document.querySelectorAll(".tab")[index].classList.add("active");
 }
 
 function showMain() {
-    loadDoc().then(text => {
+    currentTab = "main";
+    setActiveTab(0);
+    loadData(mainURL).then(text => {
         document.getElementById("content").innerText = text;
     });
 }
 
 function showChanges() {
-    loadDoc().then(text => {
-        const lines = text.split("\n");
-        const filtered = lines.filter(line => 
-            line.toLowerCase().includes("измен")
-        );
-        document.getElementById("content").innerText = 
-            filtered.length ? filtered.join("\n") : "Изменений нет 🎉";
+    currentTab = "changes";
+    setActiveTab(1);
+    loadData(changesURL).then(text => {
+        document.getElementById("content").innerText = text;
     });
 }
 
+setInterval(() => {
+    if (currentTab === "main") showMain();
+    else showChanges();
+}, 60000);
+
 showMain();
-    setInterval(showMain, 60000); // обновление раз в минуту
 </script>
 
 </body>
