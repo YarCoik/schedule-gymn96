@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Расписание</title>
+</head>
+<body>
+
+<button onclick="showMain()">ОСНОВНОЕ</button>
+<button onclick="showChanges()">ИЗМЕНЕНИЯ</button>
+
+<pre id="content">Загрузка...</pre>
+
+<script>
+const docURL = "https://docs.google.com/document/d/15_GMTlGH7J3LfqoA8PTMOyjrFHb8pAL-/export?format=txt";
+
+async function loadDoc() {
+    const response = await fetch(docURL);
+    const text = await response.text();
+    return text;
+}
+
+function showMain() {
+    loadDoc().then(text => {
+        document.getElementById("content").innerText = text;
+    });
+}
+
+function showChanges() {
+    loadDoc().then(text => {
+        const lines = text.split("\n");
+        const filtered = lines.filter(line => 
+            line.toLowerCase().includes("измен")
+        );
+        document.getElementById("content").innerText = 
+            filtered.length ? filtered.join("\n") : "Изменений нет 🎉";
+    });
+}
+
+showMain();
+</script>
+
+</body>
+</html>
