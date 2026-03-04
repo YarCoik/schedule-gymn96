@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YarCoik Schedule | V12</title>
+    <title>YarCoik Schedule</title>
     <style>
         :root {
             color-scheme: light dark;
@@ -38,9 +38,10 @@
             margin: 0; font-family: 'Inter', 'Segoe UI', sans-serif;
             background: var(--bg); color: var(--text); overflow-y: scroll;
             transition: background 0.3s, color 0.3s;
+            display: flex; flex-direction: column; min-height: 100vh;
         }
 
-        .container { max-width: 1200px; margin: auto; padding: 10px; }
+        .container { flex-grow: 1; max-width: 1200px; margin: 0 auto; padding: 10px; width: 100%; box-sizing: border-box; }
 
         .header {
             position: sticky; top: 0; z-index: 1000;
@@ -104,17 +105,34 @@
             padding: 10px !important; font-size: 13px !important;
             text-align: center !important; vertical-align: top !important; 
             color: var(--text) !important; background: transparent !important;
-            white-space: nowrap !important; /* 🔥 ВОТ ЭТА МАГИЯ ЗАЩИТИТ ОТ ПЕРЕНОСОВ 🔥 */
+            white-space: nowrap !important; /* Удерживаем таблицу от переносов */
         }
 
-        #content span, #content p { 
+        /* Вычищаем стили Гугла, но больше не ломаем SPAN */
+        #content p { 
             margin: 0 !important; padding: 0 !important; background: transparent !important; 
-            line-height: 1.4 !important; font-family: inherit !important; display: block;
+            line-height: 1.4 !important; font-family: inherit !important;
             min-height: 1.4em !important; 
             white-space: nowrap !important;
         }
+        
+        #content span {
+            background: transparent !important; font-family: inherit !important;
+            white-space: nowrap !important;
+            /* Убрали display: block, чтобы Алгебра и 219 не разъезжались */
+        }
 
         .found-cell { background: var(--highlight) !important; font-weight: bold; color: #fff !important; }
+
+        /* Стили подвала (Футера) */
+        .footer {
+            margin-top: 40px; padding: 25px 20px; text-align: center;
+            font-size: 13px; color: #64748b; border-top: 1px solid var(--border);
+            background: color-mix(in srgb, var(--card) 50%, transparent);
+        }
+        .footer p { margin: 5px 0; }
+        .footer a { color: var(--accent); text-decoration: none; font-weight: bold; transition: 0.2s; }
+        .footer a:hover { text-decoration: underline; color: var(--highlight); }
 
         @media (max-width: 600px) {
             .nav { flex-direction: column; align-items: stretch; }
@@ -138,7 +156,14 @@
             </div>
         </div>
     </div>
+    
     <div id="content">Подключение к серверам школы...</div>
+</div>
+
+<!-- Футер с дисклеймером -->
+<div class="footer">
+    <p>⚠️ Данный сайт является неофициальным фанатским проектом и не имеет прямого отношения к администрации МАОУ "Гимназия №96 г. Челябинска".</p>
+    <p>Связь с разработчиком: <a href="mailto:yarcoik@mail.ru">yarcoik@mail.ru</a></p>
 </div>
 
 <script>
@@ -174,27 +199,33 @@
     const savedClass = localStorage.getItem('yarcoik_class');
     if (savedClass) document.getElementById('classSearch').value = savedClass;
 
-    // ЗАГРУЗКА ЧЕРЕЗ ТВОЙ ЛИЧНЫЙ VERCEL-ПРОКСИ
+    // УМНАЯ ЗАГРУЗКА С ДВУМЯ ПРОКСИ (Vercel -> Codetabs)
     async function loadData() {
+        let htmlText = "";
         try {
-            // ВАЖНО: Этот запрос идет к твоему файлу api/proxy.js
-            // Если ты его еще не создал на GitHub, раскомментируй запасной вариант ниже
+            // Пытаемся загрузить через личный сервер
             const proxyUrl = `/api/proxy?url=${encodeURIComponent(links[currentTab])}`;
-            
-            // ЗАПАСНОЙ ВАРИАНТ (Если Vercel-прокси выдаст ошибку):
-            // const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(links[currentTab])}`;
-            
             const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error('Proxy error');
-            
-            const htmlText = await response.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlText, 'text/html');
-            renderSmartSchedule(doc.body);
+            if (!response.ok) throw new Error('Vercel API missing');
+            htmlText = await response.text();
         } catch (e) {
-            console.error(e);
-            document.getElementById('content').innerHTML = "<div style='color:var(--danger); padding:20px; font-weight:bold;'>Ошибка сети. Убедись, что создал файл api/proxy.js на GitHub.</div>";
+            console.warn("Личный прокси недоступен. Включаю резервный канал...");
+            try {
+                // Если личного сервера нет, работает публичный резерв
+                const fallbackUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(links[currentTab])}`;
+                const fbResponse = await fetch(fallbackUrl);
+                if (!fbResponse.ok) throw new Error('Fallback failed');
+                htmlText = await fbResponse.text();
+            } catch (err) {
+                document.getElementById('content').innerHTML = "<div style='color:var(--danger); padding:20px; font-weight:bold;'>Ошибка сети. Прокси недоступны, проверь интернет.</div>";
+                return;
+            }
         }
+
+        // Рендерим, если текст получен
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+        renderSmartSchedule(doc.body);
     }
 
     function normalizeTable(table) {
