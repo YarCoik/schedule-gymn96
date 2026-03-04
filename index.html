@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YarCoik Schedule | V11</title>
+    <title>YarCoik Schedule | V12</title>
     <style>
         :root {
             color-scheme: light dark;
@@ -99,19 +99,19 @@
 
         table { width: 100% !important; border-collapse: collapse !important; margin: 0 !important; }
 
-        /* ВАЖНО: вернул vertical-align: top */
         td, th {
             border: 1px solid var(--border) !important;
             padding: 10px !important; font-size: 13px !important;
             text-align: center !important; vertical-align: top !important; 
             color: var(--text) !important; background: transparent !important;
+            white-space: nowrap !important; /* 🔥 ВОТ ЭТА МАГИЯ ЗАЩИТИТ ОТ ПЕРЕНОСОВ 🔥 */
         }
 
-        /* ВАЖНО: вернул min-height для пустых строк (Enter'ов) */
         #content span, #content p { 
             margin: 0 !important; padding: 0 !important; background: transparent !important; 
             line-height: 1.4 !important; font-family: inherit !important; display: block;
             min-height: 1.4em !important; 
+            white-space: nowrap !important;
         }
 
         .found-cell { background: var(--highlight) !important; font-weight: bold; color: #fff !important; }
@@ -174,14 +174,18 @@
     const savedClass = localStorage.getItem('yarcoik_class');
     if (savedClass) document.getElementById('classSearch').value = savedClass;
 
-    // НОВЫЙ БЫСТРЫЙ ЗАГРУЗЧИК
+    // ЗАГРУЗКА ЧЕРЕЗ ТВОЙ ЛИЧНЫЙ VERCEL-ПРОКСИ
     async function loadData() {
         try {
-            // Обращаемся к ТВОЕМУ ЛИЧНОМУ прокси на Vercel!
+            // ВАЖНО: Этот запрос идет к твоему файлу api/proxy.js
+            // Если ты его еще не создал на GitHub, раскомментируй запасной вариант ниже
             const proxyUrl = `/api/proxy?url=${encodeURIComponent(links[currentTab])}`;
-            const response = await fetch(proxyUrl);
             
-            if (!response.ok) throw new Error('Vercel API error');
+            // ЗАПАСНОЙ ВАРИАНТ (Если Vercel-прокси выдаст ошибку):
+            // const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(links[currentTab])}`;
+            
+            const response = await fetch(proxyUrl);
+            if (!response.ok) throw new Error('Proxy error');
             
             const htmlText = await response.text();
             const parser = new DOMParser();
@@ -189,7 +193,7 @@
             renderSmartSchedule(doc.body);
         } catch (e) {
             console.error(e);
-            document.getElementById('content').innerHTML = "<div style='color:var(--danger); padding:20px; font-weight:bold;'>Ошибка подключения к школьной матрице.</div>";
+            document.getElementById('content').innerHTML = "<div style='color:var(--danger); padding:20px; font-weight:bold;'>Ошибка сети. Убедись, что создал файл api/proxy.js на GitHub.</div>";
         }
     }
 
