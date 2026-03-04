@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YarCoik Schedule | V10</title>
+    <title>YarCoik Schedule | V11</title>
     <style>
-        /* Базовые переменные (Светлая тема по умолчанию, чтобы Авто-режим работал) */
         :root {
             color-scheme: light dark;
             --bg: #f8fafc;
@@ -18,26 +17,18 @@
             --input-bg: #f1f5f9;
         }
 
-        /* Тёмная тема (Системная) */
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg: #0a0f1a;
-                --card: #161e2e;
-                --text: #e2e8f0;
-                --accent: #3b82f6;
-                --border: #2d3748;
-                --highlight: #2563eb;
-                --input-bg: #1e293b;
+                --bg: #0a0f1a; --card: #161e2e; --text: #e2e8f0;
+                --accent: #3b82f6; --border: #2d3748; --highlight: #2563eb; --input-bg: #1e293b;
             }
         }
 
-        /* Принудительная Светлая тема */
         body.light-mode {
             --bg: #f8fafc; --card: #ffffff; --text: #0f172a;
             --accent: #2563eb; --border: #e2e8f0; --highlight: #3b82f6; --input-bg: #f1f5f9;
         }
 
-        /* Принудительная Тёмная тема */
         body.dark-mode {
             --bg: #0a0f1a; --card: #161e2e; --text: #e2e8f0;
             --accent: #3b82f6; --border: #2d3748; --highlight: #2563eb; --input-bg: #1e293b;
@@ -108,16 +99,19 @@
 
         table { width: 100% !important; border-collapse: collapse !important; margin: 0 !important; }
 
+        /* ВАЖНО: вернул vertical-align: top */
         td, th {
             border: 1px solid var(--border) !important;
             padding: 10px !important; font-size: 13px !important;
-            text-align: center !important; vertical-align: middle !important;
+            text-align: center !important; vertical-align: top !important; 
             color: var(--text) !important; background: transparent !important;
         }
 
+        /* ВАЖНО: вернул min-height для пустых строк (Enter'ов) */
         #content span, #content p { 
             margin: 0 !important; padding: 0 !important; background: transparent !important; 
             line-height: 1.4 !important; font-family: inherit !important; display: block;
+            min-height: 1.4em !important; 
         }
 
         .found-cell { background: var(--highlight) !important; font-weight: bold; color: #fff !important; }
@@ -155,19 +149,17 @@
 
     let currentTab = 'changes';
 
-    // УПРАВЛЕНИЕ ТЕМАМИ
+    // Управление темами
     let currentTheme = localStorage.getItem('yarcoik_theme') || 'auto';
     function applyTheme(theme) {
         const btn = document.getElementById('themeToggle');
         document.body.classList.remove('light-mode', 'dark-mode');
         if (theme === 'light') {
-            document.body.classList.add('light-mode');
-            btn.innerText = '☀️';
+            document.body.classList.add('light-mode'); btn.innerText = '☀️';
         } else if (theme === 'dark') {
-            document.body.classList.add('dark-mode');
-            btn.innerText = '🌙';
+            document.body.classList.add('dark-mode'); btn.innerText = '🌙';
         } else {
-            btn.innerText = '🌓'; // Авто
+            btn.innerText = '🌓';
         }
         localStorage.setItem('yarcoik_theme', theme);
     }
@@ -179,32 +171,27 @@
     }
     applyTheme(currentTheme);
 
-    // Восстанавливаем класс
     const savedClass = localStorage.getItem('yarcoik_class');
     if (savedClass) document.getElementById('classSearch').value = savedClass;
 
-async function loadData() {
+    // НОВЫЙ БЫСТРЫЙ ЗАГРУЗЧИК
+    async function loadData() {
         try {
-            // Используем новый, более быстрый и стабильный прокси
-            const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(links[currentTab])}`;
-            
+            // Используем corsproxy.io — он молниеносный и отдает чистый HTML
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(links[currentTab])}`;
             const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error("Прокси не отвечает");
+            if (!response.ok) throw new Error('Proxy timeout');
             
-            // Этот прокси возвращает сразу текст, json() больше не нужен!
-            const htmlText = await response.text(); 
-            
+            const htmlText = await response.text();
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlText, 'text/html');
-            
             renderSmartSchedule(doc.body);
         } catch (e) {
-            console.error("Ошибка загрузки:", e);
-            document.getElementById('content').innerHTML = "<div style='color:var(--danger); padding:20px; font-weight:bold;'>Ошибка сети. Прокси перегружен или нет интернета.</div>";
+            console.error(e);
+            document.getElementById('content').innerHTML = "<div style='color:var(--danger); padding:20px; font-weight:bold;'>Ошибка сети. Перезагрузи страницу.</div>";
         }
     }
 
-    // Идеальный разрезатель ячеек (Убивает rowspan и colspan)
     function normalizeTable(table) {
         const rows = Array.from(table.querySelectorAll('tr'));
         const matrix =[];
@@ -225,14 +212,12 @@ async function loadData() {
                 
                 matrix[rIdx][cIdx] = cell;
                 
-                // Клонируем вправо
                 for (let c = 1; c < cSpan; c++) {
                     const clone = cell.cloneNode(true);
                     clone.setAttribute('data-col', cIdx + c);
                     matrix[rIdx][cIdx + c] = clone;
                 }
                 
-                // Клонируем вниз
                 for (let r = 1; r < rSpan; r++) {
                     if (!matrix[rIdx + r]) matrix[rIdx + r] =[];
                     const cloneDown = cell.cloneNode(true);
@@ -265,9 +250,8 @@ async function loadData() {
             const text = el.innerText.trim();
             if (!text) return;
 
-            // Обработка текста вне таблиц
             if (['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag)) {
-                if (text.length > 500 && text.indexOf(' ') === -1) return; // Мусор Гугла
+                if (text.length > 500 && text.indexOf(' ') === -1) return; 
                 
                 const div = document.createElement('div');
                 const lowerText = text.toLowerCase();
@@ -283,15 +267,13 @@ async function loadData() {
                 container.appendChild(div);
             }
             
-            // Обработка таблиц
             if (tag === 'table' || el.querySelector('table')) {
                 const table = tag === 'table' ? el : el.querySelector('table');
-                if (table.querySelectorAll('td').length < 6) return; // Игнор мелких таблиц
+                if (table.querySelectorAll('td').length < 6) return; 
 
                 const card = document.createElement('div');
                 card.className = 'day-card';
                 
-                // Ищем "Уроки по 35 минут" ВНУТРИ таблицы до её разрезания
                 const rows = Array.from(table.querySelectorAll('tr'));
                 rows.forEach(row => {
                     const cells = Array.from(row.children);
@@ -307,7 +289,7 @@ async function loadData() {
                     }
                 });
 
-                normalizeTable(table); // Разглаживаем
+                normalizeTable(table); 
                 
                 const tContainer = document.createElement('div');
                 tContainer.className = 'table-container';
@@ -325,7 +307,6 @@ async function loadData() {
         const query = inputVal.toLowerCase().replace(/\s+/g, '');
         localStorage.setItem('yarcoik_class', inputVal);
 
-        // Регулярка для ТОЧНОГО поиска (чтобы 9в не находил 8в или 9а)
         const exactMatchRegex = new RegExp(`(^|[^а-яёa-z0-9])${query}([^а-яёa-z0-9]|$)`, 'i');
         const cards = document.querySelectorAll('.day-card');
 
@@ -338,13 +319,11 @@ async function loadData() {
             let targetRows = new Set();
             let isColMode = false;
 
-            // Шаг 1: Ищем точные координаты класса
             rows.forEach((row, rIdx) => {
                 Array.from(row.children).forEach(cell => {
                     const rawText = cell.innerText.toLowerCase();
                     if (query && exactMatchRegex.test(rawText)) {
                         const colIdx = parseInt(cell.getAttribute('data-col'));
-                        // Если класс найден в шапке (первые 3 строки) -> Режим Колонок
                         if (rIdx < 3 && rawText.trim().length < 20) {
                             isColMode = true;
                             targetCols.add(colIdx);
@@ -357,7 +336,6 @@ async function loadData() {
 
             let visibleDataRows = 0;
 
-            // Шаг 2: Применяем невидимость (style.display = 'none')
             rows.forEach((row, rIdx) => {
                 const cells = Array.from(row.children);
                 let showRow = false;
@@ -370,7 +348,6 @@ async function loadData() {
                     let rowHasContent = false;
                     cells.forEach(cell => {
                         const colIdx = parseInt(cell.getAttribute('data-col'));
-                        // Показываем дни, номера уроков и колонку твоего класса
                         if (colIdx === 0 || colIdx === 1 || targetCols.has(colIdx)) {
                             cell.style.display = '';
                             if (targetCols.has(colIdx)) {
@@ -380,7 +357,7 @@ async function loadData() {
                                 cell.classList.remove('found-cell');
                             }
                         } else {
-                            cell.style.display = 'none'; // Жёстко прячем чужие колонки (8в, 9а и тд)
+                            cell.style.display = 'none'; 
                         }
                     });
                     
@@ -389,7 +366,6 @@ async function loadData() {
                         if (rIdx >= 2) visibleDataRows++;
                     }
                 } else {
-                    // Режим Строк (когда класс где-то сбоку или по центру)
                     cells.forEach(c => { c.style.display = ''; c.classList.remove('found-cell'); });
                     if (targetRows.has(rIdx)) {
                         showRow = true;
@@ -403,7 +379,6 @@ async function loadData() {
                 row.style.display = showRow ? '' : 'none';
             });
 
-            // Шаг 3: Если для класса НЕТ расписания в этот день - скрываем всю карточку
             if (query && visibleDataRows === 0 && !isColMode && targetRows.size === 0) {
                 card.style.display = 'none';
             } else {
@@ -417,12 +392,12 @@ async function loadData() {
         document.querySelectorAll('.tab').forEach(t => {
             t.classList.toggle('active', t.innerText.toLowerCase().includes(tab === 'main' ? 'осн' : 'изм'));
         });
-        document.getElementById('content').innerHTML = "<div style='padding:20px;'>Синхронизация...</div>";
+        document.getElementById('content').innerHTML = "<div style='padding:20px;'>Загрузка расписания...</div>";
         loadData();
     }
 
     loadData();
-    setInterval(loadData, 120000); // Обновление раз в 2 минуты
+    setInterval(loadData, 120000); 
 </script>
 </body>
 </html>
