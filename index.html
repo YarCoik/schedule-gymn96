@@ -177,10 +177,11 @@
     // НОВЫЙ БЫСТРЫЙ ЗАГРУЗЧИК
     async function loadData() {
         try {
-            // Используем corsproxy.io — он молниеносный и отдает чистый HTML
-            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(links[currentTab])}`;
+            // Обращаемся к ТВОЕМУ ЛИЧНОМУ прокси на Vercel!
+            const proxyUrl = `/api/proxy?url=${encodeURIComponent(links[currentTab])}`;
             const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error('Proxy timeout');
+            
+            if (!response.ok) throw new Error('Vercel API error');
             
             const htmlText = await response.text();
             const parser = new DOMParser();
@@ -188,7 +189,7 @@
             renderSmartSchedule(doc.body);
         } catch (e) {
             console.error(e);
-            document.getElementById('content').innerHTML = "<div style='color:var(--danger); padding:20px; font-weight:bold;'>Ошибка сети. Перезагрузи страницу.</div>";
+            document.getElementById('content').innerHTML = "<div style='color:var(--danger); padding:20px; font-weight:bold;'>Ошибка подключения к школьной матрице.</div>";
         }
     }
 
