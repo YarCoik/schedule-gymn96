@@ -2,10 +2,12 @@ export default async function handler(req, res) {
     const kvUrl = process.env.KV_REST_API_URL;
     const token = process.env.KV_REST_API_TOKEN;
 
-    // Если база еще не подключена, просто ничего не делаем
-    if (!kvUrl || !token) return res.status(200).send(""); 
+    // 1. ПРОВЕРКА ПОДКЛЮЧЕНИЯ БАЗЫ
+    if (!kvUrl || !token) {
+        return res.status(500).json({ error: "База Vercel KV не подключена! Зайди в Vercel -> Settings -> Environment Variables и проверь, есть ли там KV_REST_API_URL." });
+    }
 
-    // Отдача ручного расписания на сайт
+    // 2. ОТДАЧА РАСПИСАНИЯ НА ГЛАВНЫЙ САЙТ (GET)
     if (req.method === 'GET') {
         try {
             const response = await fetch(`${kvUrl}/get/manual_schedule`, {
@@ -19,11 +21,13 @@ export default async function handler(req, res) {
         }
     }
 
-    // Сохранение или удаление ручного расписания из админки
+    // 3. СОХРАНЕНИЕ ИЗ АДМИНКИ (POST)
     if (req.method === 'POST') {
         const { password, htmlContent, action } = req.body;
+        
+        // Проверка пароля
         if (password !== process.env.ADMIN_PASSWORD) {
-            return res.status(401).json({ error: 'Неверный пароль!' });
+            return res.status(401).json({ error: 'Неверный пароль от админки!' });
         }
 
         try {
@@ -41,7 +45,9 @@ export default async function handler(req, res) {
             }
             return res.status(200).json({ success: true });
         } catch (e) {
-            return res.status(500).json({ error: 'Ошибка БД' });
+            return res.status(500).json({ error: 'Ошибка записи в саму БД Vercel.' });
         }
     }
+
+    return res.status(405).json({ error: 'Метод не разрешен' });
 }
