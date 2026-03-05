@@ -1,11 +1,11 @@
 export default async function handler(req, res) {
-    // 🔥 МЫ ПОМЕНЯЛИ НАЗВАНИЯ ПЕРЕМЕННЫХ НА НОВЫЕ (UPSTASH) 🔥
-    const kvUrl = process.env.UPSTASH_REDIS_REST_URL;
-    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+    // 🔥 БЕРЕМ ТЕ САМЫЕ КЛЮЧИ ИЗ ТВОЕГО СКРИНШОТА 🔥
+    const kvUrl = process.env.KV_REST_API_URL;
+    const token = process.env.KV_REST_API_TOKEN;
 
     // 1. ПРОВЕРКА ПОДКЛЮЧЕНИЯ БАЗЫ
     if (!kvUrl || !token) {
-        return res.status(500).json({ error: "База Upstash Redis не подключена! Проверь переменные UPSTASH_REDIS_REST_URL в Vercel." });
+        return res.status(500).json({ error: "База не подключена! Проверь, нажал ли ты 'Connect Project' в настройках базы Vercel." });
     }
 
     // 2. ОТДАЧА РАСПИСАНИЯ НА ГЛАВНЫЙ САЙТ (GET)
