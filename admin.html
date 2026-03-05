@@ -41,14 +41,17 @@
         const title = document.getElementById('docTitle').value;
         const editorHtml = document.getElementById('editor').innerHTML;
         const status = document.getElementById('status');
+        const btnSave = document.getElementById('saveBtn');
 
         if (!pass) return alert("Бро, нужен пароль!");
         
         let finalHtml = "";
         if (action === 'save') {
-            if (!editorHtml.includes('<table') && !editorHtml.trim()) return alert("Пусто!");
-            finalHtml = `<div class="doc-title" style="color:#ef4444;">🚨 ${title} (Ручное добавление)</div>${editorHtml}`;
+            if (!editorHtml.includes('<table') && !editorHtml.trim()) return alert("Таблица пустая!");
+            finalHtml = `<div class="doc-title" style="color:#ef4444;">🚨 ${title} (Внимание: Замена)</div>${editorHtml}`;
         }
+
+        btnSave.innerText = "⏳ Подключение к серверу...";
 
         try {
             const response = await fetch('/api/manual', {
@@ -56,20 +59,31 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password: pass, htmlContent: finalHtml, action: action })
             });
-            const result = await response.json();
             
-            if (response.ok) {
-                status.innerText = action === 'save' ? "✅ УСПЕШНО ДОБАВЛЕНО!" : "✅ РУЧНЫЕ ЗАПИСИ УДАЛЕНЫ!";
+            // Читаем ответ сервера как текст (чтобы не подавиться, если там HTML-ошибка Vercel)
+            const textResponse = await response.text();
+            let result;
+            
+            try {
+                result = JSON.parse(textResponse); // Пробуем перевести в JSON
+            } catch (err) {
+                throw new Error("Сервер Vercel упал. Ответ сервера: " + textResponse.substring(0, 50));
+            }
+            
+            if (response.ok && result.success) {
+                status.innerText = action === 'save' ? "✅ УСПЕШНО ДОБАВЛЕНО В РАСПИСАНИЕ!" : "✅ РУЧНЫЕ ЗАПИСИ УДАЛЕНЫ!";
                 status.style.color = "#22c55e";
             } else {
-                status.innerText = "❌ Ошибка: " + result.error;
+                status.innerText = "❌ Ошибка: " + (result.error || "Неизвестная ошибка сервера");
                 status.style.color = "#ef4444";
             }
-       } catch (e) {
-            console.error(e); // Выведет ошибку в консоль браузера (F12)
-            status.innerText = "❌ Ошибка: Сервер не отвечает или база не подключена!";
+        } catch (e) {
+            console.error(e);
+            status.innerText = "❌ " + e.message;
             status.style.color = "#ef4444";
         }
+        
+        btnSave.innerText = "🚀 ДОБАВИТЬ К РАСПИСАНИЮ";
     }
 </script>
 
