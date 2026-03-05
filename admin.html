@@ -15,7 +15,7 @@
         .btn-clear:hover { background: #f87171; }
         .editor { min-height: 200px; background: #fff; color: #000; padding: 15px; border-radius: 8px; margin: 10px 0; overflow-x: auto; }
         .editor table { border-collapse: collapse; width: 100%; }
-        .editor td { border: 1px solid #ccc; padding: 5px; }
+        .editor td, .editor th { border: 1px solid #ccc; padding: 5px; }
     </style>
 </head>
 <body>
@@ -26,10 +26,10 @@
     <input type="password" id="pass" placeholder="Пароль администратора...">
     <input type="text" id="docTitle" placeholder="Заголовок (например: СРОЧНАЯ ЗАМЕНА)">
     
-    <label style="display:block; margin-top:10px;">Скопируй таблицу из Word/Excel и вставь сюда:</label>
+    <label style="display:block; margin-top:10px; color:#94a3b8;">Скопируй таблицу из Word/Excel и вставь сюда (скрипт сам очистит её от мусора):</label>
     <div id="editor" class="editor" contenteditable="true"></div>
     
-    <button onclick="sendData('save')" class="btn-save" id="saveBtn">🚀 ДОБАВИТЬ К РАСПИСАНИЮ</button>
+    <button onclick="sendData('save')" class="btn-save" id="saveBtn">🚀 ОПУБЛИКОВАТЬ РАСПИСАНИЕ</button>
     <button onclick="sendData('clear')" class="btn-clear" id="clearBtn">🗑 УДАЛИТЬ РУЧНЫЕ ЗАПИСИ</button>
     
     <p id="status" style="text-align: center; font-weight: bold; margin-top: 20px;"></p>
@@ -47,8 +47,39 @@
         
         let finalHtml = "";
         if (action === 'save') {
-            if (!editorHtml.includes('<table') && !editorHtml.trim()) return alert("Таблица пустая!");
-            finalHtml = `<div class="doc-title" style="color:#ef4444;">🚨 ${title} (Внимание: Замена)</div>${editorHtml}`;
+            if (!editorHtml.trim()) return alert("Пусто!");
+
+            // 🔥 Стерилизатор Экселя (Убивает весь мусор) 🔥
+            const temp = document.createElement('div');
+            temp.innerHTML = editorHtml;
+            const tables = temp.querySelectorAll('table');
+            let cleanHtml = "";
+
+            if (tables.length === 0) return alert("Скрипт не нашел таблицу! Вставь именно таблицу.");
+
+            tables.forEach(t => {
+                const cleanTable = document.createElement('table');
+                t.querySelectorAll('tr').forEach(row => {
+                    const cleanRow = document.createElement('tr');
+                    row.querySelectorAll('td, th').forEach(cell => {
+                        const cleanCell = document.createElement('td');
+                        
+                        // Берем только colspan и rowspan, ограничивая их, чтобы не зависло
+                        const rs = parseInt(cell.getAttribute('rowspan'));
+                        const cs = parseInt(cell.getAttribute('colspan'));
+                        if (rs && rs > 1 && rs < 50) cleanCell.setAttribute('rowspan', rs);
+                        if (cs && cs > 1 && cs < 50) cleanCell.setAttribute('colspan', cs);
+                        
+                        // Вытаскиваем только чистый текст, сохраняя переносы строк
+                        cleanCell.innerHTML = cell.innerText.trim().replace(/\n/g, '<br>');
+                        cleanRow.appendChild(cleanCell);
+                    });
+                    if (cleanRow.children.length > 0) cleanTable.appendChild(cleanRow);
+                });
+                cleanHtml += cleanTable.outerHTML;
+            });
+
+            finalHtml = `<div class="doc-title" style="color:#ef4444;">🚨 ${title} (Ручное добавление)</div>${cleanHtml}`;
         }
 
         btnSave.innerText = "⏳ Подключение к серверу...";
@@ -60,32 +91,26 @@
                 body: JSON.stringify({ password: pass, htmlContent: finalHtml, action: action })
             });
             
-            // Читаем ответ сервера как текст (чтобы не подавиться, если там HTML-ошибка Vercel)
             const textResponse = await response.text();
             let result;
-            
-            try {
-                result = JSON.parse(textResponse); // Пробуем перевести в JSON
-            } catch (err) {
-                throw new Error("Сервер Vercel упал. Ответ сервера: " + textResponse.substring(0, 50));
-            }
+            try { result = JSON.parse(textResponse); } 
+            catch (err) { throw new Error("Сервер упал: " + textResponse.substring(0, 50)); }
             
             if (response.ok && result.success) {
                 status.innerText = action === 'save' ? "✅ УСПЕШНО ДОБАВЛЕНО В РАСПИСАНИЕ!" : "✅ РУЧНЫЕ ЗАПИСИ УДАЛЕНЫ!";
                 status.style.color = "#22c55e";
+                if(action === 'clear') document.getElementById('editor').innerHTML = "";
             } else {
                 status.innerText = "❌ Ошибка: " + (result.error || "Неизвестная ошибка сервера");
                 status.style.color = "#ef4444";
             }
         } catch (e) {
-            console.error(e);
             status.innerText = "❌ " + e.message;
             status.style.color = "#ef4444";
         }
         
-        btnSave.innerText = "🚀 ДОБАВИТЬ К РАСПИСАНИЮ";
+        btnSave.innerText = "🚀 ОПУБЛИКОВАТЬ РАСПИСАНИЕ";
     }
 </script>
-
 </body>
 </html>
