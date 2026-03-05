@@ -184,7 +184,7 @@
         const tabToLoad = currentTab;
         if (!background) {
             if (htmlCache[tabToLoad]) processAndRender(htmlCache[tabToLoad]);
-            else document.getElementById('content').innerHTML = "<div style='padding:40px 20px; text-align:center; color: var(--accent); font-size: 16px; font-weight: bold;'>⏳ Подключение к матрице школы...</div>";
+            else document.getElementById('content').innerHTML = "<div style='padding:40px 20px; text-align:center; color: var(--accent); font-size: 16px; font-weight: bold;'>⏳ Подключение к расписанию школы...</div>";
         }
 
         if (isFetching[tabToLoad]) return;
