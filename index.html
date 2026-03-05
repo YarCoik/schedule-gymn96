@@ -201,32 +201,43 @@
     if (savedClass) document.getElementById('classSearch').value = savedClass;
 
     // УМНАЯ ЗАГРУЗКА С ДВУМЯ ПРОКСИ (Vercel -> Codetabs)
-    async function loadData() {
-        let htmlText = "";
+   async function loadData() {
+        let autoHtml = "";
+        let manualHtml = "";
+
         try {
-            // Пытаемся загрузить через личный сервер
-            const proxyUrl = `/api/proxy?url=${encodeURIComponent(links[currentTab])}`;
-            const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error('Vercel API missing');
-            htmlText = await response.text();
-        } catch (e) {
-            console.warn("Личный прокси недоступен. Включаю резервный канал...");
+            // 1. ГРУЗИМ АВТОМАТ ИЗ ГУГЛ ДОКОВ
             try {
-                // Если личного сервера нет, работает публичный резерв
+                const proxyUrl = `/api/proxy?url=${encodeURIComponent(links[currentTab])}`;
+                const response = await fetch(proxyUrl);
+                if (response.ok) autoHtml = await response.text();
+            } catch (e) {
+                // Если личный прокси лагает, берем запасной
                 const fallbackUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(links[currentTab])}`;
                 const fbResponse = await fetch(fallbackUrl);
-                if (!fbResponse.ok) throw new Error('Fallback failed');
-                htmlText = await fbResponse.text();
-            } catch (err) {
-                document.getElementById('content').innerHTML = "<div style='color:var(--danger); padding:20px; font-weight:bold;'>Ошибка сети. Прокси недоступны, проверь интернет.</div>";
-                return;
+                if (fbResponse.ok) autoHtml = await fbResponse.text();
             }
-        }
 
-        // Рендерим, если текст получен
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlText, 'text/html');
-        renderSmartSchedule(doc.body);
+            // 2. ГРУЗИМ РУЧНЫЕ ДОБАВЛЕНИЯ ИЗ БД (показываем их во вкладке "Изменения")
+            if (currentTab === 'changes') {
+                try {
+                    const manualRes = await fetch('/api/manual');
+                    if (manualRes.ok) manualHtml = await manualRes.text();
+                } catch(e) { console.warn("Ручных данных нет"); }
+            }
+
+            // 3. СКЛЕИВАЕМ! Ручное расписание ставим поверх автоматического
+            const combinedHtml = manualHtml + autoHtml;
+            
+            if (!combinedHtml) throw new Error("Нет данных");
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(combinedHtml, 'text/html');
+            renderSmartSchedule(doc.body);
+
+        } catch (e) {
+            document.getElementById('content').innerHTML = "<div class='announcement'>Ошибка сети. Проверь интернет.</div>";
+        }
     }
 
     function normalizeTable(table) {
