@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YarCoik Schedule</title>
-    <!-- Эмодзи-иконка -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📅</text></svg>">
+    
+    <!-- ТВОИ НАСТОЯЩИЕ ИКОНКИ -->
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    
     <style>
         :root {
             color-scheme: light dark;
@@ -35,8 +38,11 @@
 
         .search-container { flex-grow: 1; display: flex; gap: 10px; min-width: 250px; }
         .search-box { flex-grow: 1; }
+        
+        /* Поиск прокачан: type="search" добавляет крестик для очистки */
         .search-box input { width: 100%; background: var(--input-bg); border: 1px solid var(--border); padding: 12px 15px; border-radius: 10px; color: var(--text); outline: none; box-sizing: border-box; font-size: 14px; }
         .search-box input:focus { border-color: var(--accent); }
+        
         .theme-btn { background: var(--input-bg); border: 1px solid var(--border); color: var(--text); padding: 0 15px; border-radius: 10px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
 
         .doc-title { color: var(--accent); font-size: 18px; font-weight: bold; margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 2px solid var(--border); }
@@ -69,13 +75,16 @@
             </div>
             <div class="search-container">
                 <div class="search-box">
-                    <input type="text" id="classSearch" placeholder="Твой класс (напр. 9в)..." oninput="applySmartFilter()">
+                    <!-- Поменял type="text" на type="search", теперь тут есть удобный крестик -->
+                    <input type="search" id="classSearch" placeholder="Твой класс (напр. 9в)..." oninput="applySmartFilter()">
                 </div>
                 <button id="themeToggle" class="theme-btn" onclick="toggleTheme()" title="Сменить тему"></button>
             </div>
         </div>
     </div>
-    <div id="content">Подключение к серверам...</div>
+    <div id="content">
+        <div style='padding:20px; text-align:center; color: var(--accent); font-weight: bold;'>⏳ Загрузка расписания...</div>
+    </div>
 </div>
 
 <div class="footer">
@@ -90,6 +99,10 @@
     };
 
     let currentTab = 'changes';
+    
+    // СИСТЕМА КЭШИРОВАНИЯ (Для мгновенного переключения)
+    let htmlCache = { main: null, changes: null };
+    let isFetching = { main: false, changes: false };
 
     let currentTheme = localStorage.getItem('yarcoik_theme') || 'auto';
     function applyTheme(theme) {
@@ -109,46 +122,74 @@
     const savedClass = localStorage.getItem('yarcoik_class');
     if (savedClass) document.getElementById('classSearch').value = savedClass;
 
-    // ГИБРИДНЫЙ ЗАГРУЗЧИК (Авто + Ручное)
-    async function loadData() {
+    async function fetchTabData(tab) {
         let autoHtml = "";
         let manualHtml = "";
 
+        // 1. АВТОМАТ ИЗ ГУГЛ ДОКОВ
         try {
-            // 1. АВТОМАТ ИЗ ГУГЛ ДОКОВ
-            try {
-                const proxyUrl = `/api/proxy?url=${encodeURIComponent(links[currentTab])}`;
-                const response = await fetch(proxyUrl);
-                if (response.ok) autoHtml = await response.text();
-            } catch (e) {
-                const fallbackUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(links[currentTab])}`;
-                const fbResponse = await fetch(fallbackUrl);
-                if (fbResponse.ok) autoHtml = await fbResponse.text();
-            }
-
-            // 2. РУЧНЫЕ ДОБАВЛЕНИЯ ИЗ ТВОЕЙ БД
-            if (currentTab === 'changes') {
-                try {
-                    const manualRes = await fetch('/api/manual');
-                    if (manualRes.ok) manualHtml = await manualRes.text();
-                } catch(e) { console.warn("Ручных данных нет"); }
-            }
-
-            // 3. СКЛЕИВАЕМ!
-            const combinedHtml = manualHtml + autoHtml;
-            if (!combinedHtml) throw new Error("Нет данных");
-
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(combinedHtml, 'text/html');
-            renderSmartSchedule(doc.body);
-
+            const proxyUrl = `/api/proxy?url=${encodeURIComponent(links[tab])}`;
+            const response = await fetch(proxyUrl);
+            if (response.ok) autoHtml = await response.text();
+            else throw new Error();
         } catch (e) {
-            console.error(e);
-            document.getElementById('content').innerHTML = "<div class='announcement'>Ошибка загрузки расписания. Проверь интернет.</div>";
+            const fallbackUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(links[tab])}`;
+            const fbResponse = await fetch(fallbackUrl);
+            if (fbResponse.ok) autoHtml = await fbResponse.text();
+        }
+
+        // 2. РУЧНЫЕ ДОБАВЛЕНИЯ ИЗ БД
+        if (tab === 'changes') {
+            try {
+                const manualRes = await fetch('/api/manual');
+                if (manualRes.ok) manualHtml = await manualRes.text();
+            } catch(e) {}
+        }
+
+        return manualHtml + autoHtml;
+    }
+
+    // УМНЫЙ ЗАГРУЗЧИК (С кэшем)
+    async function loadData(background = false) {
+        const tabToLoad = currentTab;
+
+        // Если это не фоновое обновление и кэш есть - показываем его мгновенно!
+        if (!background) {
+            if (htmlCache[tabToLoad]) {
+                processAndRender(htmlCache[tabToLoad]);
+            } else {
+                document.getElementById('content').innerHTML = "<div style='padding:20px; text-align:center; color: var(--accent); font-weight: bold;'>⏳ Загрузка расписания...</div>";
+            }
+        }
+
+        // Предотвращаем дублирование запросов
+        if (isFetching[tabToLoad]) return;
+        isFetching[tabToLoad] = true;
+
+        try {
+            const combinedHtml = await fetchTabData(tabToLoad);
+            if (combinedHtml) {
+                htmlCache[tabToLoad] = combinedHtml; // Сохраняем в кэш
+                // Отрисовываем, только если юзер еще не переключил вкладку
+                if (currentTab === tabToLoad) {
+                    processAndRender(combinedHtml);
+                }
+            }
+        } catch (e) {
+            if (!htmlCache[tabToLoad]) {
+                document.getElementById('content').innerHTML = "<div class='announcement'>Ошибка загрузки расписания. Проверь интернет.</div>";
+            }
+        } finally {
+            isFetching[tabToLoad] = false;
         }
     }
 
-    // ЗАЩИТА ОТ ЗАВИСАНИЯ (Анти-луп)
+    function processAndRender(htmlString) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+        renderSmartSchedule(doc.body);
+    }
+
     function normalizeTable(table) {
         const rows = Array.from(table.querySelectorAll('tr'));
         const matrix =[];
@@ -161,7 +202,6 @@
                 let safety = 0;
                 while (matrix[rIdx][cIdx] && safety < 100) { cIdx++; safety++; }
                 
-                // Ограничиваем слияния ячеек, чтобы не взорвать память
                 const rSpan = Math.min(50, Math.max(1, parseInt(cell.getAttribute('rowspan')) || 1));
                 const cSpan = Math.min(50, Math.max(1, parseInt(cell.getAttribute('colspan')) || 1));
                 
@@ -261,12 +301,14 @@
     }
 
     function applySmartFilter() {
-        const inputVal = document.getElementById('classSearch').value;
+        const searchInput = document.getElementById('classSearch');
+        const inputVal = searchInput.value;
         const query = inputVal.toLowerCase().replace(/\s+/g, '');
         localStorage.setItem('yarcoik_class', inputVal);
 
         const exactMatchRegex = new RegExp(`(^|[^а-яёa-z0-9])${query}([^а-яёa-z0-9]|$)`, 'i');
         const cards = document.querySelectorAll('.day-card');
+        let anyCardVisible = false;
 
         cards.forEach(card => {
             const table = card.querySelector('table');
@@ -332,21 +374,43 @@
 
             if (query && visibleDataRows === 0 && !isColMode && targetRows.size === 0) {
                 card.style.display = 'none';
-            } else { card.style.display = ''; }
+            } else { 
+                card.style.display = ''; 
+                anyCardVisible = true;
+            }
         });
+
+        // СООБЩЕНИЕ "НИЧЕГО НЕ НАЙДЕНО"
+        let emptyMsg = document.getElementById('empty-search-msg');
+        if (query && !anyCardVisible && cards.length > 0) {
+            if (!emptyMsg) {
+                emptyMsg = document.createElement('div');
+                emptyMsg.id = 'empty-search-msg';
+                emptyMsg.className = 'announcement';
+                emptyMsg.style.textAlign = 'center';
+                document.getElementById('content').appendChild(emptyMsg);
+            }
+            emptyMsg.innerHTML = `Увы, для класса <b>${inputVal}</b> расписания не найдено 🎉`;
+        } else if (emptyMsg) {
+            emptyMsg.remove();
+        }
     }
 
     function switchTab(tab) {
+        if (currentTab === tab) return; // Если кликнули на ту же вкладку - игнорим
         currentTab = tab;
         document.querySelectorAll('.tab').forEach(t => {
             t.classList.toggle('active', t.innerText.toLowerCase().includes(tab === 'main' ? 'осн' : 'изм'));
         });
-        document.getElementById('content').innerHTML = "<div style='padding:20px;'>Синхронизация...</div>";
-        loadData();
+        
+        loadData(false); // Вызываем загрузку (кэш сработает моментально)
     }
 
-    loadData();
-    setInterval(loadData, 120000); 
+    // Первый старт
+    loadData(false);
+    
+    // Автообновление в фоне каждые 2 минуты (true значит не стирать экран)
+    setInterval(() => loadData(true), 120000); 
 </script>
 </body>
 </html>
