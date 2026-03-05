@@ -1,10 +1,11 @@
 export default async function handler(req, res) {
-    const kvUrl = process.env.KV_REST_API_URL;
-    const token = process.env.KV_REST_API_TOKEN;
+    // 🔥 МЫ ПОМЕНЯЛИ НАЗВАНИЯ ПЕРЕМЕННЫХ НА НОВЫЕ (UPSTASH) 🔥
+    const kvUrl = process.env.UPSTASH_REDIS_REST_URL;
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
     // 1. ПРОВЕРКА ПОДКЛЮЧЕНИЯ БАЗЫ
     if (!kvUrl || !token) {
-        return res.status(500).json({ error: "База Vercel KV не подключена! Зайди в Vercel -> Settings -> Environment Variables и проверь, есть ли там KV_REST_API_URL." });
+        return res.status(500).json({ error: "База Upstash Redis не подключена! Проверь переменные UPSTASH_REDIS_REST_URL в Vercel." });
     }
 
     // 2. ОТДАЧА РАСПИСАНИЯ НА ГЛАВНЫЙ САЙТ (GET)
@@ -45,7 +46,7 @@ export default async function handler(req, res) {
             }
             return res.status(200).json({ success: true });
         } catch (e) {
-            return res.status(500).json({ error: 'Ошибка записи в саму БД Vercel.' });
+            return res.status(500).json({ error: 'Ошибка записи в саму БД.' });
         }
     }
 
