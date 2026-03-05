@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YarCoik | Admin Panel</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0f1a; color: #e2e8f0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: #161e2e; padding: 30px; border-radius: 12px; border: 1px solid #2d3748; }
+        h1 { color: #3b82f6; text-align: center; }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #2d3748; background: #1e293b; color: white; font-size: 16px; box-sizing: border-box;}
+        button { background: #2563eb; font-weight: bold; cursor: pointer; transition: 0.3s; border: none; }
+        button:hover { background: #3b82f6; }
+        /* Поле, куда мы вставляем таблицу из Экселя */
+        .editor { min-height: 200px; background: #fff; color: #000; padding: 15px; border-radius: 8px; margin: 10px 0; overflow-x: auto; }
+        .editor table { border-collapse: collapse; width: 100%; }
+        .editor td { border: 1px solid #ccc; padding: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>⚙️ Админка YarCoik</h1>
+    
+    <label>Пароль доступа:</label>
+    <input type="password" id="pass" placeholder="Введи пароль от Vercel...">
+    
+    <label>Заголовок (например: Изменения на 7 марта):</label>
+    <input type="text" id="docTitle" placeholder="Изменения на...">
+    
+    <label>Таблица изменений (Скопируй из Excel/Word и вставь сюда):</label>
+    <div id="editor" class="editor" contenteditable="true" placeholder="Вставь таблицу сюда..."></div>
+    
+    <button onclick="saveSchedule()" id="saveBtn">🚀 ОПУБЛИКОВАТЬ РАСПИСАНИЕ</button>
+    <p id="status" style="text-align: center; font-weight: bold;"></p>
+</div>
+
+<script>
+    async function saveSchedule() {
+        const pass = document.getElementById('pass').value;
+        const title = document.getElementById('docTitle').value;
+        const editorHtml = document.getElementById('editor').innerHTML;
+        const status = document.getElementById('status');
+        const btn = document.getElementById('saveBtn');
+
+        if (!pass) return alert("Бро, нужен пароль!");
+        if (!editorHtml.includes('<table')) return alert("Бро, ты не вставил таблицу!");
+
+        // Формируем финальный HTML
+        const finalHtml = `
+            <div class="doc-title">${title}</div>
+            ${editorHtml}
+        `;
+
+        btn.innerText = "⏳ Сохранение...";
+        
+        try {
+            const response = await fetch('/api/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pass, htmlContent: finalHtml })
+            });
+
+            const result = await response.json();
+            
+            if (response.ok) {
+                status.innerText = "✅ РАСПИСАНИЕ УСПЕШНО ОБНОВЛЕНО!";
+                status.style.color = "#22c55e";
+            } else {
+                status.innerText = "❌ Ошибка: " + result.error;
+                status.style.color = "#ef4444";
+            }
+        } catch (e) {
+            status.innerText = "❌ Ошибка сети!";
+        }
+        
+        btn.innerText = "🚀 ОПУБЛИКОВАТЬ РАСПИСАНИЕ";
+    }
+</script>
+
+</body>
+</html>
