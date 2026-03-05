@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>YarCoik Schedule</title>
     
-    <!-- Твои настоящие иконки -->
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     
@@ -13,9 +12,9 @@
         /* БАЗОВЫЕ ПЕРЕМЕННЫЕ */
         :root {
             color-scheme: light dark;
-            --bg: #f1f5f9; --card: #ffffff; --text: #0f172a;
-            --accent: #2563eb; --border: #cbd5e1; --highlight: #3b82f6;
-            --danger: #ef4444; --input-bg: #e2e8f0; --tab-bg: #e2e8f0;
+            --bg: #f8fafc; --card: #ffffff; --text: #0f172a;
+            --accent: #2563eb; --border: #e2e8f0; --highlight: #3b82f6;
+            --danger: #ef4444; --input-bg: #f1f5f9; --tab-bg: #f1f5f9;
         }
 
         /* 🌙 ТЁМНАЯ ТЕМА */
@@ -28,7 +27,7 @@
         }
 
         /* ПРИНУДИТЕЛЬНЫЕ ТЕМЫ */
-        body.light-mode { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --accent: #2563eb; --border: #e2e8f0; --highlight: #3b82f6; --input-bg: #ffffff; --tab-bg: #e2e8f0; }
+        body.light-mode { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --accent: #2563eb; --border: #e2e8f0; --highlight: #3b82f6; --input-bg: #f1f5f9; --tab-bg: #f1f5f9; }
         body.dark-mode { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #3b82f6; --border: #334155; --highlight: #2563eb; --input-bg: #0f172a; --danger: #f87171; --tab-bg: #0f172a; }
         
         /* 👾 КИБЕРПАНК ТЕМА */
@@ -43,35 +42,37 @@
         }
 
         body { margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; -webkit-tap-highlight-color: transparent; }
-        .container { flex-grow: 1; max-width: 1000px; margin: 0 auto; padding: 10px; width: 100%; box-sizing: border-box; }
+        .container { flex-grow: 1; max-width: 1200px; margin: 0 auto; padding: 10px; width: 100%; box-sizing: border-box; }
 
-        /* ИДЕАЛЬНАЯ ШАПКА ДЛЯ МОБИЛОК */
         .header { position: sticky; top: 0; z-index: 1000; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 15px 0; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
         
-        /* iOS STYLE TABS */
-        .tabs { display: flex; background: var(--tab-bg); padding: 4px; border-radius: 12px; width: 100%; box-sizing: border-box; border: 1px solid var(--border); }
-        .tab { flex: 1; padding: 12px 0; border: none; background: transparent; color: var(--text); font-weight: 700; cursor: pointer; opacity: 0.6; border-radius: 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        /* 💻 СТАРЫЙ ДИЗАЙН ДЛЯ ПК (КОМПАКТНЫЙ) */
+        .nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .tabs { display: inline-flex; background: var(--tab-bg); padding: 4px; border-radius: 12px; border: 1px solid var(--border); }
+        .tab { padding: 10px 18px; border: none; background: transparent; color: var(--text); font-weight: 700; cursor: pointer; opacity: 0.6; border-radius: 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
         .tab.active { background: var(--accent); color: white; opacity: 1; box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 40%, transparent); transform: scale(1); }
 
-        .search-container { display: flex; gap: 8px; width: 100%; }
-        .search-box { flex-grow: 1; position: relative; }
-        .search-box input { width: 100%; background: var(--card); border: 1px solid var(--border); padding: 14px 16px; border-radius: 12px; color: var(--text); outline: none; box-sizing: border-box; font-size: 16px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+        .search-container { display: flex; gap: 8px; flex-grow: 1; justify-content: flex-end; }
+        .search-box { width: 100%; max-width: 300px; position: relative; }
+        .search-box input { width: 100%; background: var(--card); border: 1px solid var(--border); padding: 12px 16px; border-radius: 10px; color: var(--text); outline: none; box-sizing: border-box; font-size: 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
         .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
         
-        .theme-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 0 16px; border-radius: 12px; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; user-select: none; }
+        .theme-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 0 16px; border-radius: 10px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; user-select: none; }
 
         .doc-title { color: var(--accent); font-size: 18px; font-weight: 800; margin: 25px 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid var(--border); letter-spacing: -0.5px; }
         .announcement { background: color-mix(in srgb, var(--danger) 10%, transparent); border-left: 4px solid var(--danger); padding: 14px 16px; margin: 15px 0; border-radius: 0 12px 12px 0; font-weight: 600; color: var(--danger); font-size: 15px; line-height: 1.4; }
         
-        .day-card { background: var(--card); border-radius: 16px; margin-bottom: 24px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 10px 25px color-mix(in srgb, #000 4%, transparent); }
+        .day-card { background: var(--card); border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 10px 25px color-mix(in srgb, #000 4%, transparent); }
         
-        /* ПЛАВНЫЙ СКРОЛЛ НА МОБИЛКЕ */
         .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         .table-container::-webkit-scrollbar { display: none; }
         
         table { width: 100% !important; border-collapse: collapse !important; margin: 0 !important; }
-        td, th { border: 1px solid var(--border) !important; padding: 12px 10px !important; font-size: 14px !important; text-align: center !important; vertical-align: middle !important; color: var(--text) !important; background: transparent !important; white-space: nowrap !important; }
+        
+        /* 🔥 ВЕРНУЛ VERTICAL-ALIGN: TOP 🔥 */
+        td, th { border: 1px solid var(--border) !important; padding: 12px 10px !important; font-size: 14px !important; text-align: center !important; vertical-align: top !important; color: var(--text) !important; background: transparent !important; white-space: nowrap !important; }
 
+        /* 🔥 СОХРАНЯЕМ ПУСТЫЕ СТРОКИ ЧТОБЫ ГЕОГРАФИЯ НЕ УЕЗЖАЛА ВВЕРХ 🔥 */
         #content p { margin: 0 !important; padding: 0 !important; background: transparent !important; line-height: 1.5 !important; font-family: inherit !important; min-height: 1.5em !important; white-space: nowrap !important; }
         #content span { background: transparent !important; font-family: inherit !important; white-space: nowrap !important; }
         .found-cell { background: var(--highlight) !important; font-weight: bold; color: #fff !important; }
@@ -79,21 +80,32 @@
         .footer { margin-top: 40px; padding: 30px 20px; text-align: center; font-size: 13px; color: #64748b; border-top: 1px solid var(--border); background: color-mix(in srgb, var(--card) 50%, transparent); line-height: 1.6; }
         .footer p { margin: 5px 0; }
         .footer a { color: var(--accent); text-decoration: none; font-weight: bold; }
+
+        /* 📱 НОВЫЙ ДИЗАЙН ДЛЯ ТЕЛЕФОНОВ (ШИРОКИЙ) */
+        @media (max-width: 600px) { 
+            .nav { flex-direction: column; align-items: stretch; }
+            .tabs { display: flex; width: 100%; box-sizing: border-box; }
+            .tab { flex: 1; text-align: center; padding: 12px 0; }
+            .search-container { max-width: none; justify-content: stretch; }
+            .search-box { max-width: none; flex-grow: 1; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <div class="tabs">
-            <button class="tab" onclick="switchTab('main')">Основное</button>
-            <button class="tab active" onclick="switchTab('changes')">Изменения</button>
-        </div>
-        <div class="search-container">
-            <div class="search-box">
-                <input type="search" id="classSearch" placeholder="Твой класс (напр. 9в)..." oninput="applySmartFilter()">
+        <div class="nav">
+            <div class="tabs">
+                <button class="tab" onclick="switchTab('main')">Основное</button>
+                <button class="tab active" onclick="switchTab('changes')">Изменения</button>
             </div>
-            <button id="themeToggle" class="theme-btn" onclick="toggleTheme()" title="Сменить тему"></button>
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="search" id="classSearch" placeholder="Твой класс (напр. 9в)..." oninput="applySmartFilter()">
+                </div>
+                <button id="themeToggle" class="theme-btn" onclick="toggleTheme()" title="Сменить тему"></button>
+            </div>
         </div>
     </div>
     <div id="content">
@@ -117,7 +129,7 @@
     let isFetching = { main: false, changes: false };
 
     // УПРАВЛЕНИЕ ТЕМАМИ
-    const themes =['dark', 'light', 'cyber'];
+    const themes = ['dark', 'light', 'cyber'];
     let currentTheme = localStorage.getItem('yarcoik_theme') || 'dark';
     if (!themes.includes(currentTheme)) currentTheme = 'dark';
 
@@ -195,7 +207,7 @@
 
     function normalizeTable(table) {
         const rows = Array.from(table.querySelectorAll('tr'));
-        const matrix =[];
+        const matrix = [];
         rows.forEach((row, rIdx) => {
             if (!matrix[rIdx]) matrix[rIdx] =[];
             let cIdx = 0;
@@ -209,7 +221,7 @@
                 cell.removeAttribute('rowspan');
                 cell.removeAttribute('colspan');
                 cell.setAttribute('data-col', cIdx);
-                cell.setAttribute('data-orig-colspan', cSpan); // Запоминаем широкие ячейки
+                cell.setAttribute('data-orig-colspan', cSpan); 
                 
                 matrix[rIdx][cIdx] = cell;
                 for (let c = 1; c < cSpan; c++) {
@@ -296,7 +308,6 @@
         applySmartFilter();
     }
 
-    // 🔥 ИДЕАЛЬНЫЙ АЛГОРИТМ "РАДАР V2" 🔥
     function applySmartFilter() {
         const searchInput = document.getElementById('classSearch');
         const inputVal = searchInput.value;
@@ -314,7 +325,7 @@
             if (!table) return;
 
             const rows = Array.from(table.querySelectorAll('tr'));
-            let colActive = {}; // Состояние каждой колонки: включена или выключена
+            let colActive = {}; 
             let visibleDataRows = 0;
 
             rows.forEach((row, rIdx) => {
@@ -323,7 +334,6 @@
                 let rowHasTargetContent = false;
                 let hasWideCell = false;
 
-                // 1. СКАНИРУЕМ СТРОКУ
                 cells.forEach(cell => {
                     const colIdx = parseInt(cell.getAttribute('data-col'));
                     const origColspan = parseInt(cell.getAttribute('data-orig-colspan') || 1);
@@ -332,41 +342,37 @@
                     const rawText = cell.innerText.toLowerCase();
                     const cleanText = rawText.replace(/\s+/g, '');
 
-                    // Если это колонка с уроками (>1), проверяем, чей это класс
                     if (colIdx > 1) {
                         if (query && exactMatchRegex.test(rawText)) {
-                            colActive[colIdx] = true; // Нашли наш класс - включаем колонку!
+                            colActive[colIdx] = true; 
                         } else if (isClassDeclaration(rawText)) {
-                            colActive[colIdx] = false; // Нашли чужой класс (напр. 7б) - вырубаем колонку!
+                            colActive[colIdx] = false; 
                         }
                     }
 
-                    // 2. ПРИНИМАЕМ РЕШЕНИЕ ПО ЯЧЕЙКЕ
                     if (!query) {
                         cell.style.display = '';
                         cell.classList.remove('found-cell');
                         if (colIdx > 1 && cleanText.length > 0) rowHasTargetContent = true;
                     } else {
                         if (origColspan >= 3 || colIdx <= 1) {
-                            cell.style.display = ''; // Всегда показываем "Широкие анонсы" и "Дни/Номера"
+                            cell.style.display = ''; 
                         } else {
                             if (colActive[colIdx]) {
                                 cell.style.display = '';
                                 if (exactMatchRegex.test(rawText)) cell.classList.add('found-cell');
                                 else cell.classList.remove('found-cell');
                                 
-                                // Проверяем, не пустой ли это урок (типа "---")
                                 if (cleanText.replace(/[-_.]/g, '').length > 0) {
                                     rowHasTargetContent = true;
                                 }
                             } else {
-                                cell.style.display = 'none'; // Прячем ячейки выключенных колонок
+                                cell.style.display = 'none'; 
                             }
                         }
                     }
                 });
 
-                // 3. ПРИНИМАЕМ РЕШЕНИЕ ПО СТРОКЕ
                 if (!query) {
                     showRow = true;
                     visibleDataRows++;
@@ -379,7 +385,6 @@
                 row.style.display = showRow ? '' : 'none';
             });
 
-            // Если для твоего класса нет ни одного урока в этот день - прячем всю карточку!
             if (query && visibleDataRows === 0) {
                 card.style.display = 'none';
             } else { 
@@ -388,7 +393,6 @@
             }
         });
 
-        // Сообщение "Ничего не найдено"
         let emptyMsg = document.getElementById('empty-search-msg');
         if (query && !anyCardVisible && cards.length > 0) {
             if (!emptyMsg) {
