@@ -65,8 +65,9 @@
                 status.innerText = "❌ Ошибка: " + result.error;
                 status.style.color = "#ef4444";
             }
-        } catch (e) {
-            status.innerText = "❌ Ошибка сети!";
+       } catch (e) {
+            console.error(e); // Выведет ошибку в консоль браузера (F12)
+            status.innerText = "❌ Ошибка: Сервер не отвечает или база не подключена!";
             status.style.color = "#ef4444";
         }
     }
