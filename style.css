@@ -1,0 +1,79 @@
+/* БАЗОВЫЕ ПЕРЕМЕННЫЕ */
+:root {
+    color-scheme: light dark;
+    --bg: #f8fafc; --card: #ffffff; --text: #0f172a;
+    --accent: #2563eb; --border: #e2e8f0; --highlight: #3b82f6;
+    --danger: #ef4444; --input-bg: #f1f5f9; --tab-bg: #f1f5f9;
+}
+
+/* 🌙 ТЁМНАЯ ТЕМА */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f172a; --card: #1e293b; --text: #f8fafc;
+        --accent: #3b82f6; --border: #334155; --highlight: #2563eb; 
+        --input-bg: #0f172a; --danger: #f87171; --tab-bg: #0f172a;
+    }
+}
+
+/* ПРИНУДИТЕЛЬНЫЕ ТЕМЫ */
+body.light-mode { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --accent: #2563eb; --border: #e2e8f0; --highlight: #3b82f6; --input-bg: #f1f5f9; --tab-bg: #f1f5f9; }
+body.dark-mode { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #3b82f6; --border: #334155; --highlight: #2563eb; --input-bg: #0f172a; --danger: #f87171; --tab-bg: #0f172a; }
+
+/* 👾 КИБЕРПАНК ТЕМА */
+body.cyber-mode { --bg: #09090b; --card: #18181b; --text: #a78bfa; --accent: #d946ef; --border: #4c1d95; --highlight: #c026d3; --input-bg: #000000; --danger: #f43f5e; --tab-bg: #000000; }
+body.cyber-mode .day-card { box-shadow: 0 0 20px rgba(192, 38, 211, 0.15); border: 1px solid var(--border); }
+body.cyber-mode .tab.active { box-shadow: 0 0 15px rgba(217, 70, 239, 0.5); color: #fff; text-shadow: 0 0 5px #fff; }
+body.cyber-mode .found-cell { background: #701a75 !important; color: #fdf4ff !important; text-shadow: 0 0 5px #e879f9; border-color: #d946ef !important; }
+
+/* ПЛАВНЫЕ АНИМАЦИИ */
+body, .day-card, .header, .tabs, .tab, .search-box input, .theme-btn, .footer, td, th, .doc-title, .announcement {
+    transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, text-shadow 0.4s ease;
+}
+
+body { margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; -webkit-tap-highlight-color: transparent; }
+.container { flex-grow: 1; max-width: 1200px; margin: 0 auto; padding: 10px; width: 100%; box-sizing: border-box; overflow-x: hidden; }
+
+.header { position: sticky; top: 0; z-index: 1000; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 15px 0; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
+
+.nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.tabs { display: inline-flex; background: var(--tab-bg); padding: 4px; border-radius: 12px; border: 1px solid var(--border); }
+.tab { padding: 10px 18px; border: none; background: transparent; color: var(--text); font-weight: 700; cursor: pointer; opacity: 0.6; border-radius: 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+.tab.active { background: var(--accent); color: white; opacity: 1; box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 40%, transparent); transform: scale(1); }
+
+.search-container { display: flex; gap: 8px; flex-grow: 1; justify-content: flex-end; }
+.search-box { width: 100%; max-width: 300px; position: relative; }
+.search-box input { width: 100%; background: var(--card); border: 1px solid var(--border); padding: 12px 16px; border-radius: 10px; color: var(--text); outline: none; box-sizing: border-box; font-size: 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+.search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
+
+.theme-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 0 16px; border-radius: 10px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; user-select: none; }
+
+.doc-title { color: var(--accent); font-size: 18px; font-weight: 800; margin: 25px 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid var(--border); letter-spacing: -0.5px; word-wrap: break-word; white-space: normal; }
+.announcement { background: color-mix(in srgb, var(--danger) 10%, transparent); border-left: 4px solid var(--danger); padding: 14px 16px; margin: 15px 0; border-radius: 0 12px 12px 0; font-weight: 600; color: var(--danger); font-size: 15px; line-height: 1.4; word-wrap: break-word; white-space: normal; }
+.doc-title span, .announcement span, .doc-title p, .announcement p { white-space: normal !important; word-wrap: break-word; }
+
+.day-card { background: var(--card); border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 10px 25px color-mix(in srgb, #000 4%, transparent); }
+
+.table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.table-container::-webkit-scrollbar { display: none; }
+
+table { width: 100% !important; border-collapse: collapse !important; margin: 0 !important; }
+
+td, th { border: 1px solid var(--border) !important; padding: 12px 10px !important; font-size: 14px !important; text-align: center !important; vertical-align: top !important; color: var(--text) !important; background: transparent !important; white-space: nowrap !important; }
+td span, th span, td p, th p { white-space: nowrap !important; }
+
+#content p { margin: 0 !important; padding: 0 !important; background: transparent !important; line-height: 1.5 !important; font-family: inherit !important; min-height: 1.5em !important; }
+#content span { background: transparent !important; font-family: inherit !important; }
+
+.found-cell { background: var(--highlight) !important; font-weight: bold; color: #fff !important; }
+
+.footer { margin-top: 40px; padding: 30px 20px; text-align: center; font-size: 13px; color: #64748b; border-top: 1px solid var(--border); background: color-mix(in srgb, var(--card) 50%, transparent); line-height: 1.6; }
+.footer p { margin: 5px 0; }
+.footer a { color: var(--accent); text-decoration: none; font-weight: bold; }
+
+@media (max-width: 600px) { 
+    .nav { flex-direction: column; align-items: stretch; }
+    .tabs { display: flex; width: 100%; box-sizing: border-box; }
+    .tab { flex: 1; text-align: center; padding: 12px 0; }
+    .search-container { max-width: none; justify-content: stretch; }
+    .search-box { max-width: none; flex-grow: 1; }
+}
