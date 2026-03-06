@@ -130,7 +130,7 @@
 </div>
 
 <div class="footer">
-    <p>⚠️ Данный сайт является неофициальным фанатским проектом и не имеет прямого отношения к администрации МАОУ "Гимназия №96 г. Челябинска".</p>
+    <p>⚠️ Данный сайт является неофициальным проектом и не имеет прямого отношения к администрации МАОУ "Гимназия №96 г. Челябинска".</p>
     <p>Связь с разработчиком: <a href="mailto:yarblox.help@gmail.com">yarblox.help@gmail.com</a></p>
 </div>
 
@@ -169,29 +169,58 @@
     const savedClass = localStorage.getItem('yarcoik_class');
     if (savedClass) document.getElementById('classSearch').value = savedClass;
 
+    // ЗАГРУЗЧИК (Vercel -> Codetabs -> Corsproxy -> AllOrigins) 
     async function fetchTabData(tab) {
         let autoHtml = "";
         let manualHtml = "";
-        try {
-            const proxyUrl = `/api/proxy?url=${encodeURIComponent(links[tab])}`;
-            const response = await fetch(proxyUrl);
-            if (response.ok) autoHtml = await response.text();
-            else throw new Error();
-        } catch (e) {
-            const fallbackUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(links[tab])}`;
-            const fbResponse = await fetch(fallbackUrl);
-            if (fbResponse.ok) autoHtml = await fbResponse.text();
+        const targetUrl = links[tab];
+
+        // Массив всех возможных прокси по приоритету
+        const proxyList =[
+            `/api/proxy?url=${encodeURIComponent(targetUrl)}`,                         // 1. Личный Vercel (Самый быстрый)
+            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`, // 2. Codetabs (Работает в РФ без VPN)
+            `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,                  // 3. Corsproxy (Идеально работает С VPN)
+            `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`      // 4. Allorigins ( резерв)
+        ];
+
+        // Умный цикл: пробуем прокси один за другим
+        for (let i = 0; i < proxyList.length; i++) {
+            try {
+                const response = await fetch(proxyList[i]);
+                if (!response.ok) throw new Error('Proxy status bad');
+                
+                // Allorigins возвращает JSON, остальные отдают чистый текст
+                if (proxyList[i].includes('allorigins')) {
+                    const data = await response.json();
+                    autoHtml = data.contents;
+                } else {
+                    autoHtml = await response.text();
+                }
+                
+                // Если загрузили реальный HTML с таблицей — прерываем цикл, мы победили!
+                if (autoHtml && (autoHtml.includes('<table') || autoHtml.includes('<body'))) {
+                    console.log(`✅ Расписание загружено через прокси #${i + 1}`);
+                    break;
+                }
+            } catch (e) {
+                console.warn(`⚠️ Прокси #${i + 1} не ответил, переключаюсь на следующий...`);
+            }
         }
 
+        if (!autoHtml) {
+            throw new Error('Все прокси-сервера заблокированы или недоступны.');
+        }
+
+        // 2. РУЧНЫЕ ДОБАВЛЕНИЯ ИЗ БД (Если мы на вкладке "Изменения")
         if (tab === 'changes') {
             try {
                 const manualRes = await fetch('/api/manual');
                 if (manualRes.ok) manualHtml = await manualRes.text();
-            } catch(e) {}
+            } catch(e) { console.warn("Ручных данных нет"); }
         }
+        
         return manualHtml + autoHtml;
     }
-
     async function loadData(background = false) {
         const tabToLoad = currentTab;
         if (!background) {
