@@ -170,26 +170,41 @@
     if (savedClass) document.getElementById('classSearch').value = savedClass;
 
     // ЗАГРУЗЧИК (Vercel -> Codetabs -> Corsproxy -> AllOrigins) 
+    // 🔥 ТАЙМЕР-УБИЙЦА: Жестко обрывает зависшие запросы
+    async function fetchWithTimeout(resource, timeout = 3000) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        
+        try {
+            const response = await fetch(resource, { signal: controller.signal });
+            clearTimeout(id); // Если успели - отменяем таймер-убийцу
+            return response;
+        } catch (error) {
+            clearTimeout(id);
+            throw error; // Прокси завис -> выкидываем ошибку!
+        }
+    }
+
+    // 🔥 УЛЬТРА-БЫСТРЫЙ КАСКАДНЫЙ ЗАГРУЗЧИК
     async function fetchTabData(tab) {
         let autoHtml = "";
         let manualHtml = "";
         const targetUrl = links[tab];
 
-        // Массив всех возможных прокси по приоритету
         const proxyList =[
-            `/api/proxy?url=${encodeURIComponent(targetUrl)}`,                         // 1. Личный Vercel (Самый быстрый)
-            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`, // 2. Codetabs (Работает в РФ без VPN)
-            `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,                  // 3. Corsproxy (Идеально работает С VPN)
-            `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`      // 4. Allorigins ( резерв)
+            `/api/proxy?url=${encodeURIComponent(targetUrl)}`,
+            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+            `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+            `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`
         ];
 
-        // Умный цикл: пробуем прокси один за другим
+        // Пробуем каждый прокси. Даем каждому ровно 3 секунды на ответ!
         for (let i = 0; i < proxyList.length; i++) {
             try {
-                const response = await fetch(proxyList[i]);
-                if (!response.ok) throw new Error('Proxy status bad');
+                // Используем наш новый fetch с тайм-аутом (3000 миллисекунд)
+                const response = await fetchWithTimeout(proxyList[i], 3000); 
+                if (!response.ok) throw new Error('Bad status');
                 
-                // Allorigins возвращает JSON, остальные отдают чистый текст
                 if (proxyList[i].includes('allorigins')) {
                     const data = await response.json();
                     autoHtml = data.contents;
@@ -197,26 +212,27 @@
                     autoHtml = await response.text();
                 }
                 
-                // Если загрузили реальный HTML с таблицей — прерываем цикл, мы победили!
                 if (autoHtml && (autoHtml.includes('<table') || autoHtml.includes('<body'))) {
-                    console.log(`✅ Расписание загружено через прокси #${i + 1}`);
-                    break;
+                    console.log(`✅ Успех! Расписание загружено через прокси #${i + 1}`);
+                    break; // Победа, выходим из цикла!
                 }
             } catch (e) {
-                console.warn(`⚠️ Прокси #${i + 1} не ответил, переключаюсь на следующий...`);
+                console.warn(`⚠️ Прокси #${i + 1} завис или заблокирован. Переключаюсь...`);
             }
         }
 
         if (!autoHtml) {
-            throw new Error('Все прокси-сервера заблокированы или недоступны.');
+            throw new Error('Все серверы лежат.');
         }
 
-        // 2. РУЧНЫЕ ДОБАВЛЕНИЯ ИЗ БД (Если мы на вкладке "Изменения")
+        // 2. РУЧНЫЕ ДОБАВЛЕНИЯ ИЗ ТВОЕЙ БД
         if (tab === 'changes') {
             try {
-                const manualRes = await fetch('/api/manual');
+                const manualRes = await fetchWithTimeout('/api/manual', 2000); // На ручную базу даем 2 сек
                 if (manualRes.ok) manualHtml = await manualRes.text();
-            } catch(e) { console.warn("Ручных данных нет"); }
+            } catch(e) { 
+                console.warn("Ручных данных нет или БД не ответила"); 
+            }
         }
         
         return manualHtml + autoHtml;
